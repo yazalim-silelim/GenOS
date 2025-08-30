@@ -1,13 +1,786 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>HTML + CSS</title>
-    <link rel="stylesheet" href="styles.css" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Modern Akıllı Telefon Arayüzü — Demo</title>
+    <style>
+      :root {
+        --phone-width: 390px;
+        --phone-height: 844px;
+        --bg: #0f1724;
+        --glass: rgba(255, 255, 255, 0.06);
+        --accent: linear-gradient(135deg, #6dd3ff, #7c6bff);
+        --soft: rgba(255, 255, 255, 0.06);
+        --text: #e6eef8;
+        --muted: #9aa7bf;
+        --radius: 18px;
+        --safe-area-top: env(safe-area-inset-top);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        font-family: Inter, Segoe UI, system-ui, -apple-system, Roboto,
+          "Helvetica Neue", Arial;
+        color: var(--text);
+        background: radial-gradient(
+            1200px 600px at 10% 10%,
+            #071027 0%,
+            transparent 20%
+          ),
+          radial-gradient(900px 500px at 90% 90%, #071121 0%, transparent 20%),
+          var(--bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+      }
+
+      /* PHONE SHELL */
+      .device {
+        width: var(--phone-width);
+        height: var(--phone-height);
+        border-radius: 36px;
+        background: linear-gradient(180deg, #051025 0%, #07102a 100%);
+        padding: 12px;
+        box-shadow: 0 20px 60px rgba(2, 6, 23, 0.7),
+          inset 0 1px 0 rgba(255, 255, 255, 0.02);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 6px solid rgba(255, 255, 255, 0.03);
+      }
+
+      /* STATUS BAR */
+      .status {
+        height: calc(36px + var(--safe-area-top));
+        padding-top: var(--safe-area-top);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 14px;
+        padding-right: 14px;
+        z-index: 30;
+      }
+      .status .left,
+      .status .right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .pill {
+        background: var(--soft);
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      /* SCREEN */
+      .screen {
+        flex: 1;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.02),
+          rgba(0, 0, 0, 0.02)
+        );
+        position: relative;
+        overflow: hidden;
+        border-radius: 18px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* WALLPAPER */
+      .wallpaper {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        filter: contrast(1.02) saturate(1.04);
+        transform-origin: center;
+        transition: transform 0.9s cubic-bezier(0.16, 0.8, 0.32, 1);
+        z-index: 0;
+      }
+
+      /* LOCK LAYER */
+      .lock-layer {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        padding: 30px;
+        text-align: center;
+        background: linear-gradient(
+          180deg,
+          rgba(5, 12, 30, 0.35),
+          rgba(2, 6, 18, 0.35)
+        );
+        backdrop-filter: blur(6px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+      }
+      .lock-title {
+        font-size: 20px;
+        margin: 6px 0;
+      }
+      .clock {
+        font-size: 46px;
+        font-weight: 600;
+      }
+      .unlock-btn {
+        margin-top: 18px;
+        padding: 12px 22px;
+        border-radius: 999px;
+        background: var(--accent);
+        border: none;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 8px 30px rgba(124, 107, 255, 0.24);
+      }
+      .soft-hint {
+        font-size: 13px;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+
+      /* HOME */
+      .home {
+        position: relative;
+        z-index: 5;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .search-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 10px 6px;
+      }
+      .search {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 14px;
+        padding: 10px 12px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        backdrop-filter: blur(6px);
+        cursor: text;
+      }
+      .search input {
+        background: transparent;
+        border: 0;
+        outline: 0;
+        color: var(--text);
+        font-size: 14px;
+        width: 100%;
+      }
+      .quick-widgets {
+        display: flex;
+        gap: 10px;
+        margin-top: 6px;
+        padding-left: 6px;
+        padding-right: 6px;
+      }
+      .widget {
+        flex: 1;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(255, 255, 255, 0.01)
+        );
+        padding: 10px;
+        border-radius: 12px;
+        min-height: 54px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .widget .title {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .widget .big {
+        font-weight: 600;
+        font-size: 18px;
+      }
+
+      /* ICON GRID */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        padding: 12px;
+        margin-top: 12px;
+        align-content: start;
+        overflow: auto;
+      }
+      .app {
+        width: 100%;
+        aspect-ratio: 1/1;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(0, 0, 0, 0.02)
+        );
+        border-radius: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px;
+        cursor: grab;
+        user-select: none;
+        touch-action: manipulation;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+      }
+      .app:active {
+        cursor: grabbing;
+      }
+      .app img {
+        width: 56%;
+        height: 56%;
+        object-fit: contain;
+        border-radius: 10px;
+      }
+      .app .label {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      /* DOCK */
+      .dock {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 26px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(0, 0, 0, 0.02)
+        );
+        backdrop-filter: blur(8px);
+        padding: 10px;
+        border-radius: 999px;
+        display: flex;
+        gap: 12px;
+        box-shadow: 0 12px 30px rgba(2, 6, 23, 0.6);
+        z-index: 12;
+      }
+      .dock .dock-icon {
+        width: 58px;
+        height: 58px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      /* APP SHELL (mock) */
+      .app-shell {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(2, 6, 23, 0.95),
+          rgba(2, 6, 23, 0.92)
+        );
+        z-index: 40;
+        display: none;
+        flex-direction: column;
+      }
+      .app-bar {
+        height: 56px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px;
+      }
+      .app-content {
+        flex: 1;
+        padding: 12px;
+        overflow: auto;
+      }
+
+      /* CONTROL CENTER */
+      .control {
+        position: absolute;
+        right: 12px;
+        top: 64px;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.03),
+          rgba(0, 0, 0, 0.02)
+        );
+        padding: 10px;
+        border-radius: 12px;
+        backdrop-filter: blur(8px);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 20;
+      }
+      .toggle {
+        display: flex;
+        gap: 8px;
+      }
+      .btn {
+        padding: 10px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.02);
+        min-width: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* ANIMATION STATES */
+      .locked {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      .unlocked .lock-layer {
+        transform: translateY(-12px);
+        opacity: 0;
+        pointer-events: none;
+      }
+      .unlocked .wallpaper {
+        transform: scale(1.05);
+      }
+
+      /* JIGGLE (edit mode) */
+      .edit .app {
+        animation: wiggle 0.9s ease-in-out infinite;
+      }
+      @keyframes wiggle {
+        0% {
+          transform: rotate(-1deg);
+        }
+        50% {
+          transform: rotate(1deg);
+        }
+        100% {
+          transform: rotate(-1deg);
+        }
+      }
+
+      /* RESPONSIVE small */
+      @media (max-width: 420px) {
+        :root {
+          --phone-width: 340px;
+          --phone-height: 740px;
+        }
+        .app img {
+          width: 62%;
+        }
+      }
+
+      /* reduced motion */
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation: none !important;
+        }
+      }
+
+      /* tiny helpers */
+      .hidden {
+        display: none !important;
+      }
+      .center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
   </head>
   <body>
-    <h1>This is a simple HTML + CSS template!</h1>
+    <div class="device" role="application" aria-label="Akıllı Telefon Arayüzü">
+      <div class="status" aria-hidden="true">
+        <div class="left">
+          <div class="pill">TR</div>
+          <div style="font-size: 13px; color: var(--muted)">Wi‑Fi</div>
+        </div>
+        <div class="right">
+          <div style="font-size: 13px; color: var(--muted)">100% 🔋</div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen">
+        <div
+          class="wallpaper"
+          id="wallpaper"
+          style="
+            background-image: linear-gradient(
+                120deg,
+                rgba(77, 102, 255, 0.25),
+                rgba(95, 221, 191, 0.15)
+              ),
+              url('https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=1200&q=60');
+          "
+        ></div>
+
+        <!-- LOCK LAYER -->
+        <div class="lock-layer locked" id="lockLayer">
+          <div class="clock" id="clock">12:47</div>
+          <div class="lock-title">Kilitli</div>
+          <button class="unlock-btn" id="unlockBtn">Kilidi Aç</button>
+          <div class="soft-hint">
+            Ekrana uzun basarak uygulamaları düzenleyebilirsin.
+          </div>
+        </div>
+
+        <!-- HOME -->
+        <div class="home" id="home">
+          <div class="search-row">
+            <div class="search" id="searchBox" role="search" tabindex="0">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden
+              >
+                <path
+                  d="M21 21l-4.35-4.35"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <input
+                placeholder="Ara veya uygulama başlat..."
+                id="searchInput"
+                aria-label="Ara"
+              />
+            </div>
+            <div class="pill center" id="todayBtn" title="Bugün">Bugün</div>
+          </div>
+
+          <div class="quick-widgets">
+            <div class="widget" role="region" aria-label="Hava durumu">
+              <div class="title">Hava</div>
+              <div class="big" id="weather">22°C • Parçalı Bulutlu</div>
+            </div>
+            <div class="widget" role="region" aria-label="Takvim">
+              <div class="title">Takvim</div>
+              <div class="big">Yarın: Toplantı 14:00</div>
+            </div>
+          </div>
+
+          <div class="grid" id="grid" aria-live="polite">
+            <!-- Example apps: icons are placeholders - değiştirilebilir -->
+            <div class="app" data-app="messages" draggable="true" tabindex="0">
+              <img
+                src="https://api.iconify.design/clarity:speech-bubble.svg?color=1f2937"
+                alt="Mesajlar"
+              />
+              <div class="label">Mesajlar</div>
+            </div>
+            <div class="app" data-app="camera" draggable="true" tabindex="0">
+              <img
+                src="https://api.iconify.design/heroicons-outline:camera.svg?color=1f2937"
+                alt="Kamera"
+              />
+              <div class="label">Kamera</div>
+            </div>
+            <div class="app" data-app="settings" draggable="true" tabindex="0">
+              <img
+                src="https://api.iconify.design/mdi:cog-outline.svg?color=1f2937"
+                alt="Ayarlar"
+              />
+              <div class="label">Ayarlar</div>
+            </div>
+            <div class="app" data-app="gallery" draggable="true" tabindex="0">
+              <img
+                src="https://api.iconify.design/mdi:image-outline.svg?color=1f2937"
+                alt="Galeri"
+              />
+              <div class="label">Galeri</div>
+            </div>
+
+            <div class="app" data-app="music" draggable="true" tabindex="0">
+              <img
+                src="https://api.iconify.design/mdi:music-note-outline.svg?color=1f2937"
+                alt="Müzik"
+              />
+              <div class="label">Müzik</div>
+            </div>
+            <div class="app" data-app="maps" draggable="true" tabindex="0">
+              <img
+                src="https://api.iconify.design/mdi:map-outline.svg?color=1f2937"
+                alt="Haritalar"
+              />
+              <div class="label">Harita</div>
+            </div>
+            <div class="app" data-app="notes" draggable="true" tabindex="0">
+              <img
+                src="https://api.iconify.design/mdi:note-outline.svg?color=1f2937"
+                alt="Notlar"
+              />
+              <div class="label">Notlar</div>
+            </div>
+            <div class="app" data-app="store" draggable="true" tabindex="0">
+              <img
+                src="https://api.iconify.design/mdi:storefront-outline.svg?color=1f2937"
+                alt="Mağaza"
+              />
+              <div class="label">Mağaza</div>
+            </div>
+          </div>
+
+          <!-- DOCK -->
+          <div class="dock" id="dock">
+            <div class="dock-icon" data-app="phone">
+              <img
+                src="https://api.iconify.design/mdi:phone-outline.svg?color=1f2937"
+                style="width: 46%; height: 46%"
+                alt="Telefon"
+              />
+            </div>
+            <div class="dock-icon" data-app="browser">
+              <img
+                src="https://api.iconify.design/mdi:web.svg?color=1f2937"
+                style="width: 46%; height: 46%"
+                alt="Tarayıcı"
+              />
+            </div>
+            <div class="dock-icon" data-app="messages">
+              <img
+                src="https://api.iconify.design/clarity:speech-bubble.svg?color=1f2937"
+                style="width: 46%; height: 46%"
+                alt="Mesajlar"
+              />
+            </div>
+          </div>
+
+          <!-- CONTROL CENTER -->
+          <div class="control" id="control">
+            <div class="toggle">
+              <div class="btn" id="wifiBtn" title="Wi‑Fi">Wi‑Fi</div>
+              <div class="btn" id="btBtn" title="Bluetooth">BT</div>
+            </div>
+            <div style="display: flex; gap: 8px">
+              <div class="btn" id="brightnessBtn" title="Parlaklık">☀️</div>
+              <div class="btn" id="nightBtn" title="Gece Modu">🌙</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- APP SHELL (mock) -->
+        <div class="app-shell" id="appShell" aria-hidden="true">
+          <div class="app-bar">
+            <button id="backApp" class="btn">←</button>
+            <div id="appTitle">Uygulama</div>
+          </div>
+          <div class="app-content" id="appContent">
+            Uygulama içerik alanı — demo
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // --- Basit etkileşimler & özellikler ---
+      const lockLayer = document.getElementById("lockLayer");
+      const unlockBtn = document.getElementById("unlockBtn");
+      const device = document.querySelector(".device");
+      const screen = document.getElementById("screen");
+      const wallpaper = document.getElementById("wallpaper");
+      const grid = document.getElementById("grid");
+      const appShell = document.getElementById("appShell");
+      const appContent = document.getElementById("appContent");
+      const appTitle = document.getElementById("appTitle");
+
+      // clock
+      function updateClock() {
+        const d = new Date();
+        const h = d.getHours();
+        const m = String(d.getMinutes()).padStart(2, "0");
+        document.getElementById("clock").textContent = h + ":" + m;
+      }
+      updateClock();
+      setInterval(updateClock, 60000);
+
+      // unlock animation
+      unlockBtn.addEventListener("click", () => {
+        device.classList.add("unlocked");
+        lockLayer.classList.add("hidden");
+        // focus search for convenience
+        setTimeout(() => document.getElementById("searchInput").focus(), 420);
+      });
+
+      // open app mock
+      function openApp(name) {
+        appShell.style.display = "flex";
+        appShell.setAttribute("aria-hidden", "false");
+        appTitle.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+        appContent.textContent =
+          name + " uygulaması (demo). Buraya gerçek app içeriği koyabilirsin.";
+      }
+
+      // back from app
+      document.getElementById("backApp").addEventListener("click", () => {
+        appShell.style.display = "none";
+        appShell.setAttribute("aria-hidden", "true");
+      });
+
+      // icon click
+      document.querySelectorAll(".app").forEach((a) => {
+        a.addEventListener("dblclick", () => openApp(a.dataset.app));
+        a.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") openApp(a.dataset.app);
+        });
+      });
+
+      // dock clicks
+      document
+        .querySelectorAll(".dock-icon")
+        .forEach((d) =>
+          d.addEventListener("click", () => openApp(d.dataset.app))
+        );
+
+      // drag & drop reorder with touch support
+      let dragged = null;
+      grid.addEventListener("dragstart", (e) => {
+        dragged = e.target.closest(".app");
+        e.dataTransfer?.setData("text/plain", "drag");
+        setTimeout(() => dragged.classList.add("dragging"), 20);
+      });
+      grid.addEventListener("dragend", (e) => {
+        if (dragged) {
+          dragged.classList.remove("dragging");
+          dragged = null;
+        }
+      });
+
+      grid.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        const after = getDragAfterElement(grid, e.clientY, e.clientX);
+        if (!dragged) return;
+        if (after == null) grid.appendChild(dragged);
+        else grid.insertBefore(dragged, after);
+      });
+
+      function getDragAfterElement(container, y, x) {
+        const elements = [...container.querySelectorAll(".app:not(.dragging)")];
+        return elements.reduce((closest, child) => {
+          const box = child.getBoundingClientRect();
+          const offset = Math.hypot(
+            x - (box.left + box.width / 2),
+            y - (box.top + box.height / 2)
+          );
+          if (closest == null || offset < closest.offset) {
+            return { offset, element: child };
+          }
+          return closest;
+        }, null)?.element;
+      }
+
+      // long-press to enter edit mode
+      let pressTimer = null;
+      let isEdit = false;
+      grid.addEventListener("pointerdown", (e) => {
+        const el = e.target.closest(".app");
+        if (!el) return;
+        pressTimer = setTimeout(() => {
+          device.classList.add("edit");
+          isEdit = true;
+        }, 700);
+      });
+      grid.addEventListener("pointerup", () => {
+        clearTimeout(pressTimer);
+      });
+      document.addEventListener("pointermove", () => {
+        clearTimeout(pressTimer);
+      });
+
+      // exit edit on tap outside
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".app")) {
+          device.classList.remove("edit");
+          isEdit = false;
+        }
+      });
+
+      // quick search: focus and open first app with substring
+      const searchInput = document.getElementById("searchInput");
+      searchInput.addEventListener("input", () => {
+        const q = searchInput.value.toLowerCase().trim();
+        if (!q) return;
+        const apps = [...document.querySelectorAll(".app")];
+        const match = apps.find((a) =>
+          a.querySelector(".label").textContent.toLowerCase().includes(q)
+        );
+        if (match) match.classList.add("pulse");
+        setTimeout(() => apps.forEach((a) => a.classList.remove("pulse")), 700);
+      });
+
+      // control center toggles (demo)
+      document
+        .getElementById("wifiBtn")
+        .addEventListener("click", () => alert("Wi‑Fi ayarları (demo)"));
+      document
+        .getElementById("btBtn")
+        .addEventListener("click", () => alert("Bluetooth ayarları (demo)"));
+
+      // wallpaper switcher (double-tap wallpaper to cycle)
+      const wallpapers = [
+        "linear-gradient(120deg, rgba(77,102,255,0.25), rgba(95,221,191,0.15)),url('https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=1200&q=60')",
+        "linear-gradient(135deg, rgba(255,97,97,0.15), rgba(255,183,77,0.12)),url('https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1200&q=60')",
+        "linear-gradient(160deg, rgba(111,76,255,0.14), rgba(0,210,255,0.06)),url('https://images.unsplash.com/photo-1526406915896-3f66a1c8f8d8?auto=format&fit=crop&w=1200&q=60')",
+      ];
+      let idx = 0;
+      wallpaper.addEventListener("dblclick", () => {
+        idx = (idx + 1) % wallpapers.length;
+        wallpaper.style.backgroundImage = wallpapers[idx];
+      });
+
+      // accessibility: keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          appShell.style.display = "none";
+          device.classList.remove("edit");
+        }
+        if (e.key === "u" && e.ctrlKey) {
+          device.classList.add("unlocked");
+          lockLayer.classList.add("hidden");
+        }
+      });
+
+      // small helper: simulate opening settings on click
+      document.querySelectorAll("[data-app]").forEach((el) =>
+        el.addEventListener("click", (ev) => {
+          // single click: highlight
+          if (isEdit) return; // don't open while editing
+          el.animate(
+            [{ transform: "scale(0.98)" }, { transform: "scale(1)" }],
+            { duration: 150 }
+          );
+        })
+      );
+
+      // double-click is handled above (openApp)
+
+      // friendly tip (you can remove this) — utana sıkıla tarifi:)
+      console.log(
+        "Arayüz yüklendi. İstersen bu tek dosyayı kaydet ve tarayıcıda aç. Utanma — ikon setleri ve tema paketleri eklemeye yardım ederim 😉"
+      );
+    </script>
   </body>
 </html>
