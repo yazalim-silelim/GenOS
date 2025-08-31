@@ -1,786 +1,473 @@
 <!DOCTYPE html>
 <html lang="tr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Modern Akıllı Telefon Arayüzü — Demo</title>
-    <style>
-      :root {
-        --phone-width: 390px;
-        --phone-height: 844px;
-        --bg: #0f1724;
-        --glass: rgba(255, 255, 255, 0.06);
-        --accent: linear-gradient(135deg, #6dd3ff, #7c6bff);
-        --soft: rgba(255, 255, 255, 0.06);
-        --text: #e6eef8;
-        --muted: #9aa7bf;
-        --radius: 18px;
-        --safe-area-top: env(safe-area-inset-top);
-      }
-      * {
-        box-sizing: border-box;
-      }
-      html,
-      body {
-        height: 100%;
-        margin: 0;
-        font-family: Inter, Segoe UI, system-ui, -apple-system, Roboto,
-          "Helvetica Neue", Arial;
-        color: var(--text);
-        background: radial-gradient(
-            1200px 600px at 10% 10%,
-            #071027 0%,
-            transparent 20%
-          ),
-          radial-gradient(900px 500px at 90% 90%, #071121 0%, transparent 20%),
-          var(--bg);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 40px;
-      }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GenOS</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(120deg, #232526 0%, #414345 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    .phone-frame {
+      width: 360px;
+      max-width: 98vw;
+      height: 700px;
+      max-height: 98vh;
+      background: rgba(255,255,255,0.12);
+      border-radius: 32px;
+      border: 8px solid rgba(0,0,0,0.3);
+      box-shadow: 0 20px 60px rgba(30,64,175,0.16), 0 2px 24px #1976d2a6;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      backdrop-filter: blur(14px);
+      animation: frameIn 0.7s cubic-bezier(.68,-0.55,.27,1.55);
+    }
+    @keyframes frameIn {
+      from { opacity: 0; transform: scale(0.85) translateY(60px);}
+      to { opacity: 1; transform: none;}
+    }
+    .status-bar {
+      height: 38px;
+      background: rgba(12,24,60,0.36);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 15px;
+      padding: 0 16px;
+      width: 100%;
+      box-shadow: 0 1px 8px #1976d2a1;
+      z-index: 2;
+    }
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    .lock-screen, .home-screen {
+      position: absolute;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s;
+      z-index: 1;
+    }
+    .home-screen {
+      background: linear-gradient(110deg,#232526 0%, #50e3c2 100%);
+      color: #fff;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .home-screen.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .lock-screen {
+      background: linear-gradient(135deg,#353535 0%, #1976d2 100%);
+      color: #fff;
+    }
+    .modern-clock {
+      font-size: 44px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 4px;
+      text-shadow: 0 2px 24px #1976d2a3, 0 1px 0 #fff;
+      margin: 36px 0 18px 0;
+      background: rgba(255,255,255,0.08);
+      border-radius: 15px;
+      padding: 13px 22px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 4px 22px rgba(30,64,175,0.13);
+      width: 88%; max-width: 280px;
+      align-self: center;
+      animation: clockIn 1s cubic-bezier(.68,-0.55,.27,1.55);
+    }
+    @keyframes clockIn {
+      from { opacity: 0; transform: scale(0.8);}
+      to { opacity: 1; transform: none;}
+    }
+    .unlock-btn {
+      margin-top: 25px;
+      padding: 10px 28px;
+      border-radius: 22px;
+      border: none;
+      background: linear-gradient(90deg,#4a90e2,#50e3c2);
+      color: #fff;
+      cursor: pointer;
+      font-size: 17px;
+      font-weight: 600;
+      box-shadow: 0 2px 14px rgba(80,227,194,0.12);
+      transition: background 0.3s, transform 0.15s;
+    }
+    .unlock-btn:hover {
+      background: linear-gradient(90deg,#50e3c2,#4a90e2);
+      transform: scale(1.07);
+    }
 
-      /* PHONE SHELL */
-      .device {
-        width: var(--phone-width);
-        height: var(--phone-height);
-        border-radius: 36px;
-        background: linear-gradient(180deg, #051025 0%, #07102a 100%);
-        padding: 12px;
-        box-shadow: 0 20px 60px rgba(2, 6, 23, 0.7),
-          inset 0 1px 0 rgba(255, 255, 255, 0.02);
-        position: relative;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        border: 6px solid rgba(255, 255, 255, 0.03);
-      }
+    /* MODERN DOCK - YENİDEN HİZALAMA VE BOYUTLANDIRMA */
+    .modern-dock {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 20px;
+      margin: 0 auto;
+      width: calc(100% - 32px); /* 2x16px padding kenar boşluğu */
+      max-width: 100%;
+      display: flex;
+      gap: 16px;
+      background: rgba(255,255,255,0.13);
+      border-radius: 22px;
+      padding: 12px 10px;
+      box-shadow: 0 6px 24px 0 rgba(60,160,220,0.11), 0 1.5px 0 #fff inset;
+      backdrop-filter: blur(16px);
+      justify-content: space-between;
+      z-index: 10;
+      animation: dockIn 1.2s .2s both cubic-bezier(.68,-0.55,.27,1.55);
+    }
+    @keyframes dockIn {
+      from { opacity: 0; transform: translateY(30px) scale(0.7);}
+      to { opacity: 1; transform: none;}
+    }
+    .modern-icon {
+      width: 48px; height: 48px;
+      border-radius: 15px;
+      background: linear-gradient(120deg, #ffffff16 0%, #1976d2 80%);
+      box-shadow: 0 2px 14px rgba(30, 64, 175, 0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 23px; color: #fff; cursor: pointer;
+      transition: transform 0.17s cubic-bezier(.68,-0.55,.27,1.55), box-shadow 0.2s, background 0.3s;
+      border: 2px solid rgba(255,255,255,0.07);
+      outline: none;
+    }
+    .modern-icon:hover, .modern-icon:focus {
+      transform: scale(1.15) rotate(-3deg);
+      box-shadow: 0 8px 24px #50e3c2a0, 0 2px 16px #1976d2a0;
+      background: linear-gradient(110deg, #1976d2 10%, #50e3c2 100%);
+    }
 
-      /* STATUS BAR */
-      .status {
-        height: calc(36px + var(--safe-area-top));
-        padding-top: var(--safe-area-top);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-left: 14px;
-        padding-right: 14px;
-        z-index: 30;
-      }
-      .status .left,
-      .status .right {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-      .pill {
-        background: var(--soft);
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        color: var(--muted);
-      }
+    /* MODAL - ÇERÇEVE İÇİNE YERLEŞİYOR */
+    .settings-modal {
+      position: absolute;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(30,64,175,0.13);
+      display: none;
+      align-items: center; justify-content: center;
+      z-index: 99;
+      animation: modalIn 0.4s;
+      backdrop-filter: blur(8px);
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.85);}
+      to { opacity: 1; transform: scale(1);}
+    }
+    .settings-panel {
+      background: rgba(255,255,255,0.98);
+      border-radius: 18px;
+      min-width: 270px; max-width: 94vw;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: panelIn 0.4s;
+      backdrop-filter: blur(10px);
+    }
+    @keyframes panelIn {
+      from { opacity: 0; transform: translateY(22px);}
+      to { opacity: 1; transform: none;}
+    }
+    .settings-tabs {
+      display: flex;
+      background: #eef2f7;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    .settings-tab {
+      flex: 1; padding: 11px; text-align: center; cursor: pointer; font-weight: 500; transition: background 0.16s;
+      color: #555; border: none; background: #eef2f7; outline: none;
+      box-shadow:0 2px 8px rgba(80,227,194,0.06) inset; font-size:15px;
+    }
+    .settings-tab.active { background: #fff; color: #1976d2;}
+    .settings-content { padding: 17px; min-height:140px; font-size:14px;}
+    .settings-row { margin-bottom:14px; display: flex; align-items: center;}
+    .settings-row label { flex:1; font-weight:500;}
+    input[type="range"] { width:90px; accent-color: #1976d2; }
+    input[type="checkbox"] { accent-color: #1976d2; width:16px; height:16px; }
+    .settings-close {
+      align-self:flex-end; border:none; background:none; font-size:20px; color:#888; cursor:pointer; margin:8px;
+      transition:color 0.2s;
+    }
+    .settings-close:hover { color:#1976d2;}
 
-      /* SCREEN */
-      .screen {
-        flex: 1;
-        background: linear-gradient(
-          180deg,
-          rgba(255, 255, 255, 0.02),
-          rgba(0, 0, 0, 0.02)
-        );
-        position: relative;
-        overflow: hidden;
-        border-radius: 18px;
-        padding: 14px;
-        display: flex;
-        flex-direction: column;
-      }
+    /* BATARYA GÖSTERGESİ */
+    .battery {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .battery-icon {
+      width: 22px; height: 11px;
+      border: 2px solid #fff;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.07);
+      position: relative;
+      overflow: hidden;
+      margin-right: 2px;
+    }
+    .battery-icon::after {
+      content: "";
+      width: 2px; height: 7px;
+      background: #fff;
+      position: absolute;
+      right: -4px; top: 2px;
+      border-radius: 1px;
+    }
+    .battery-level {
+      background: #0f0;
+      height: 100%; width: 100%;
+      transition: width 0.6s, background 0.6s;
+    }
+    .battery-anim {
+      position: absolute; left: 0; top: 0; height: 100%; 
+      background: rgba(80,227,194,0.38); width: 0%;
+      animation: chargeAnim 1.2s infinite linear;
+    }
+    @keyframes chargeAnim {
+      0%{width:0%;}
+      50%{width:100%;}
+      100%{width:0%;}
+    }
 
-      /* WALLPAPER */
-      .wallpaper {
-        position: absolute;
-        inset: 0;
-        background-size: cover;
-        background-position: center;
-        filter: contrast(1.02) saturate(1.04);
-        transform-origin: center;
-        transition: transform 0.9s cubic-bezier(0.16, 0.8, 0.32, 1);
-        z-index: 0;
-      }
-
-      /* LOCK LAYER */
-      .lock-layer {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 10;
-        padding: 30px;
-        text-align: center;
-        background: linear-gradient(
-          180deg,
-          rgba(5, 12, 30, 0.35),
-          rgba(2, 6, 18, 0.35)
-        );
-        backdrop-filter: blur(6px);
-        transition: opacity 0.6s ease, transform 0.6s ease;
-      }
-      .lock-title {
-        font-size: 20px;
-        margin: 6px 0;
-      }
-      .clock {
-        font-size: 46px;
-        font-weight: 600;
-      }
-      .unlock-btn {
-        margin-top: 18px;
-        padding: 12px 22px;
-        border-radius: 999px;
-        background: var(--accent);
-        border: none;
-        color: #fff;
-        font-weight: 600;
-        cursor: pointer;
-        box-shadow: 0 8px 30px rgba(124, 107, 255, 0.24);
-      }
-      .soft-hint {
-        font-size: 13px;
-        color: var(--muted);
-        margin-top: 8px;
-      }
-
-      /* HOME */
-      .home {
-        position: relative;
-        z-index: 5;
-        display: flex;
-        flex-direction: column;
-        height: 100%;
-      }
-      .search-row {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        padding: 10px 6px;
-      }
-      .search {
-        flex: 1;
-        background: rgba(255, 255, 255, 0.04);
-        border-radius: 14px;
-        padding: 10px 12px;
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        backdrop-filter: blur(6px);
-        cursor: text;
-      }
-      .search input {
-        background: transparent;
-        border: 0;
-        outline: 0;
-        color: var(--text);
-        font-size: 14px;
-        width: 100%;
-      }
-      .quick-widgets {
-        display: flex;
-        gap: 10px;
-        margin-top: 6px;
-        padding-left: 6px;
-        padding-right: 6px;
-      }
-      .widget {
-        flex: 1;
-        background: linear-gradient(
-          180deg,
-          rgba(255, 255, 255, 0.03),
-          rgba(255, 255, 255, 0.01)
-        );
-        padding: 10px;
-        border-radius: 12px;
-        min-height: 54px;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .widget .title {
-        font-size: 12px;
-        color: var(--muted);
-      }
-      .widget .big {
-        font-weight: 600;
-        font-size: 18px;
-      }
-
-      /* ICON GRID */
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 14px;
-        padding: 12px;
-        margin-top: 12px;
-        align-content: start;
-        overflow: auto;
-      }
-      .app {
-        width: 100%;
-        aspect-ratio: 1/1;
-        background: linear-gradient(
-          180deg,
-          rgba(255, 255, 255, 0.03),
-          rgba(0, 0, 0, 0.02)
-        );
-        border-radius: 14px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 8px;
-        cursor: grab;
-        user-select: none;
-        touch-action: manipulation;
-        transition: transform 0.18s ease, box-shadow 0.18s ease;
-      }
-      .app:active {
-        cursor: grabbing;
-      }
-      .app img {
-        width: 56%;
-        height: 56%;
-        object-fit: contain;
-        border-radius: 10px;
-      }
-      .app .label {
-        font-size: 12px;
-        color: var(--muted);
-        text-align: center;
-      }
-
-      /* DOCK */
-      .dock {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: 26px;
-        background: linear-gradient(
-          180deg,
-          rgba(255, 255, 255, 0.03),
-          rgba(0, 0, 0, 0.02)
-        );
-        backdrop-filter: blur(8px);
-        padding: 10px;
-        border-radius: 999px;
-        display: flex;
-        gap: 12px;
-        box-shadow: 0 12px 30px rgba(2, 6, 23, 0.6);
-        z-index: 12;
-      }
-      .dock .dock-icon {
-        width: 58px;
-        height: 58px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-      }
-
-      /* APP SHELL (mock) */
-      .app-shell {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(
-          180deg,
-          rgba(2, 6, 23, 0.95),
-          rgba(2, 6, 23, 0.92)
-        );
-        z-index: 40;
-        display: none;
-        flex-direction: column;
-      }
-      .app-bar {
-        height: 56px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 12px;
-      }
-      .app-content {
-        flex: 1;
-        padding: 12px;
-        overflow: auto;
-      }
-
-      /* CONTROL CENTER */
-      .control {
-        position: absolute;
-        right: 12px;
-        top: 64px;
-        background: linear-gradient(
-          180deg,
-          rgba(255, 255, 255, 0.03),
-          rgba(0, 0, 0, 0.02)
-        );
-        padding: 10px;
-        border-radius: 12px;
-        backdrop-filter: blur(8px);
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        z-index: 20;
-      }
-      .toggle {
-        display: flex;
-        gap: 8px;
-      }
-      .btn {
-        padding: 10px;
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.02);
-        min-width: 48px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      /* ANIMATION STATES */
-      .locked {
-        transform: translateY(0);
-        opacity: 1;
-      }
-      .unlocked .lock-layer {
-        transform: translateY(-12px);
-        opacity: 0;
-        pointer-events: none;
-      }
-      .unlocked .wallpaper {
-        transform: scale(1.05);
-      }
-
-      /* JIGGLE (edit mode) */
-      .edit .app {
-        animation: wiggle 0.9s ease-in-out infinite;
-      }
-      @keyframes wiggle {
-        0% {
-          transform: rotate(-1deg);
-        }
-        50% {
-          transform: rotate(1deg);
-        }
-        100% {
-          transform: rotate(-1deg);
-        }
-      }
-
-      /* RESPONSIVE small */
-      @media (max-width: 420px) {
-        :root {
-          --phone-width: 340px;
-          --phone-height: 740px;
-        }
-        .app img {
-          width: 62%;
-        }
-      }
-
-      /* reduced motion */
-      @media (prefers-reduced-motion: reduce) {
-        * {
-          transition: none !important;
-          animation: none !important;
-        }
-      }
-
-      /* tiny helpers */
-      .hidden {
-        display: none !important;
-      }
-      .center {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="device" role="application" aria-label="Akıllı Telefon Arayüzü">
-      <div class="status" aria-hidden="true">
-        <div class="left">
-          <div class="pill">TR</div>
-          <div style="font-size: 13px; color: var(--muted)">Wi‑Fi</div>
+    /* RESPONSIVE */
+    @media (max-width: 480px) {
+      .phone-frame { width: 99vw; height: 99vh; border-radius: 7vw;}
+      .modern-clock { font-size: 25px; padding: 8px 6px; margin: 14px 0 7px 0; max-width: 90vw;}
+      .modern-dock { gap: 8px; padding: 5px 2px; width: calc(100% - 10px); bottom: 8px;}
+      .modern-icon { width: 28px; height: 28px; font-size: 13px;}
+      .settings-panel { min-width: 90vw;}
+    }
+  </style>
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="status-bar">
+      <div id="statusTime">--:--</div>
+      <div class="battery">
+        <div class="battery-icon">
+          <div class="battery-level" id="batteryLevel"></div>
+          <div id="batteryAnim" style="display:none;" class="battery-anim"></div>
         </div>
-        <div class="right">
-          <div style="font-size: 13px; color: var(--muted)">100% 🔋</div>
-        </div>
+        <span id="batteryPercent">100%</span>
+        <span id="chargingStatus" style="margin-left:4px;"></span>
       </div>
-
-      <div class="screen" id="screen">
-        <div
-          class="wallpaper"
-          id="wallpaper"
-          style="
-            background-image: linear-gradient(
-                120deg,
-                rgba(77, 102, 255, 0.25),
-                rgba(95, 221, 191, 0.15)
-              ),
-              url('https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=1200&q=60');
-          "
-        ></div>
-
-        <!-- LOCK LAYER -->
-        <div class="lock-layer locked" id="lockLayer">
-          <div class="clock" id="clock">12:47</div>
-          <div class="lock-title">Kilitli</div>
-          <button class="unlock-btn" id="unlockBtn">Kilidi Aç</button>
-          <div class="soft-hint">
-            Ekrana uzun basarak uygulamaları düzenleyebilirsin.
-          </div>
-        </div>
-
-        <!-- HOME -->
-        <div class="home" id="home">
-          <div class="search-row">
-            <div class="search" id="searchBox" role="search" tabindex="0">
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                aria-hidden
-              >
-                <path
-                  d="M21 21l-4.35-4.35"
-                  stroke="currentColor"
-                  stroke-width="1.6"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-              <input
-                placeholder="Ara veya uygulama başlat..."
-                id="searchInput"
-                aria-label="Ara"
-              />
-            </div>
-            <div class="pill center" id="todayBtn" title="Bugün">Bugün</div>
-          </div>
-
-          <div class="quick-widgets">
-            <div class="widget" role="region" aria-label="Hava durumu">
-              <div class="title">Hava</div>
-              <div class="big" id="weather">22°C • Parçalı Bulutlu</div>
-            </div>
-            <div class="widget" role="region" aria-label="Takvim">
-              <div class="title">Takvim</div>
-              <div class="big">Yarın: Toplantı 14:00</div>
-            </div>
-          </div>
-
-          <div class="grid" id="grid" aria-live="polite">
-            <!-- Example apps: icons are placeholders - değiştirilebilir -->
-            <div class="app" data-app="messages" draggable="true" tabindex="0">
-              <img
-                src="https://api.iconify.design/clarity:speech-bubble.svg?color=1f2937"
-                alt="Mesajlar"
-              />
-              <div class="label">Mesajlar</div>
-            </div>
-            <div class="app" data-app="camera" draggable="true" tabindex="0">
-              <img
-                src="https://api.iconify.design/heroicons-outline:camera.svg?color=1f2937"
-                alt="Kamera"
-              />
-              <div class="label">Kamera</div>
-            </div>
-            <div class="app" data-app="settings" draggable="true" tabindex="0">
-              <img
-                src="https://api.iconify.design/mdi:cog-outline.svg?color=1f2937"
-                alt="Ayarlar"
-              />
-              <div class="label">Ayarlar</div>
-            </div>
-            <div class="app" data-app="gallery" draggable="true" tabindex="0">
-              <img
-                src="https://api.iconify.design/mdi:image-outline.svg?color=1f2937"
-                alt="Galeri"
-              />
-              <div class="label">Galeri</div>
-            </div>
-
-            <div class="app" data-app="music" draggable="true" tabindex="0">
-              <img
-                src="https://api.iconify.design/mdi:music-note-outline.svg?color=1f2937"
-                alt="Müzik"
-              />
-              <div class="label">Müzik</div>
-            </div>
-            <div class="app" data-app="maps" draggable="true" tabindex="0">
-              <img
-                src="https://api.iconify.design/mdi:map-outline.svg?color=1f2937"
-                alt="Haritalar"
-              />
-              <div class="label">Harita</div>
-            </div>
-            <div class="app" data-app="notes" draggable="true" tabindex="0">
-              <img
-                src="https://api.iconify.design/mdi:note-outline.svg?color=1f2937"
-                alt="Notlar"
-              />
-              <div class="label">Notlar</div>
-            </div>
-            <div class="app" data-app="store" draggable="true" tabindex="0">
-              <img
-                src="https://api.iconify.design/mdi:storefront-outline.svg?color=1f2937"
-                alt="Mağaza"
-              />
-              <div class="label">Mağaza</div>
-            </div>
-          </div>
-
-          <!-- DOCK -->
-          <div class="dock" id="dock">
-            <div class="dock-icon" data-app="phone">
-              <img
-                src="https://api.iconify.design/mdi:phone-outline.svg?color=1f2937"
-                style="width: 46%; height: 46%"
-                alt="Telefon"
-              />
-            </div>
-            <div class="dock-icon" data-app="browser">
-              <img
-                src="https://api.iconify.design/mdi:web.svg?color=1f2937"
-                style="width: 46%; height: 46%"
-                alt="Tarayıcı"
-              />
-            </div>
-            <div class="dock-icon" data-app="messages">
-              <img
-                src="https://api.iconify.design/clarity:speech-bubble.svg?color=1f2937"
-                style="width: 46%; height: 46%"
-                alt="Mesajlar"
-              />
-            </div>
-          </div>
-
-          <!-- CONTROL CENTER -->
-          <div class="control" id="control">
-            <div class="toggle">
-              <div class="btn" id="wifiBtn" title="Wi‑Fi">Wi‑Fi</div>
-              <div class="btn" id="btBtn" title="Bluetooth">BT</div>
-            </div>
-            <div style="display: flex; gap: 8px">
-              <div class="btn" id="brightnessBtn" title="Parlaklık">☀️</div>
-              <div class="btn" id="nightBtn" title="Gece Modu">🌙</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- APP SHELL (mock) -->
-        <div class="app-shell" id="appShell" aria-hidden="true">
-          <div class="app-bar">
-            <button id="backApp" class="btn">←</button>
-            <div id="appTitle">Uygulama</div>
-          </div>
-          <div class="app-content" id="appContent">
-            Uygulama içerik alanı — demo
-          </div>
+    </div>
+    <div class="main-content">
+      <div class="lock-screen" id="lockScreen">
+        <div class="modern-clock" id="lockClock">--:--</div>
+        <div style="font-size:23px; font-weight:700; margin-bottom:12px;">🔒 Kilitli</div>
+        <button class="unlock-btn" onclick="unlockPhone()">Kilidi Aç</button>
+      </div>
+      <div class="home-screen" id="homeScreen">
+        <div class="modern-clock" id="homeClock">--:--</div>
+        <div class="modern-dock">
+          <div class="modern-icon" onclick="openApp('Ayarlar')"><span>⚙️</span></div>
+          <div class="modern-icon" onclick="openApp('Mesajlar')"><span>💬</span></div>
+          <div class="modern-icon" onclick="openApp('Kamera')"><span>📷</span></div>
+          <div class="modern-icon" onclick="openApp('Tarayıcı')"><span>🌐</span></div>
+          <div class="modern-icon" onclick="openApp('Mağaza')"><span>🛒</span></div>
         </div>
       </div>
     </div>
+    <div class="settings-modal" id="settingsModal">
+      <div class="settings-panel">
+        <button class="settings-close" onclick="closeSettings()">✖</button>
+        <div class="settings-tabs">
+          <button class="settings-tab active" onclick="showSettingsTab('general')">Genel</button>
+          <button class="settings-tab" onclick="showSettingsTab('about')">Hakkında</button>
+        </div>
+        <div class="settings-content" id="settingsContent"></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // State
+    let animSpeed = 0.4;
+    let theme = "dark", wifi = true, notifications = true, brightness = 60, volume = 40;
+    const totalStorage = 60; // MB
 
-    <script>
-      // --- Basit etkileşimler & özellikler ---
-      const lockLayer = document.getElementById("lockLayer");
-      const unlockBtn = document.getElementById("unlockBtn");
-      const device = document.querySelector(".device");
-      const screen = document.getElementById("screen");
-      const wallpaper = document.getElementById("wallpaper");
-      const grid = document.getElementById("grid");
-      const appShell = document.getElementById("appShell");
-      const appContent = document.getElementById("appContent");
-      const appTitle = document.getElementById("appTitle");
+    // Saat
+    function updateClock() {
+      const now = new Date();
+      const t = now.getHours().toString().padStart(2,"0") + ":" +
+                now.getMinutes().toString().padStart(2,"0");
+      document.getElementById("lockClock").textContent = t;
+      document.getElementById("homeClock").textContent = t;
+      document.getElementById("statusTime").textContent = t;
+    }
+    setInterval(updateClock, 1000); updateClock();
 
-      // clock
-      function updateClock() {
-        const d = new Date();
-        const h = d.getHours();
-        const m = String(d.getMinutes()).padStart(2, "0");
-        document.getElementById("clock").textContent = h + ":" + m;
+    // Batarya
+    function updateBatteryAnim(charging){
+      document.getElementById("batteryAnim").style.display = charging ? "block" : "none";
+    }
+    async function initBattery() {
+      if(navigator.getBattery) {
+        const battery = await navigator.getBattery();
+        function updateAll(){
+          const level = Math.round(battery.level * 100);
+          document.getElementById("batteryPercent").textContent = level+"%";
+          document.getElementById("batteryLevel").style.width = level+"%";
+          document.getElementById("batteryLevel").style.background = level > 20 ? "#0f0" : "#f00";
+          document.getElementById("chargingStatus").textContent = battery.charging ? "⚡" : "";
+          updateBatteryAnim(battery.charging);
+        }
+        updateAll();
+        battery.addEventListener("levelchange", updateAll);
+        battery.addEventListener("chargingchange", updateAll);
       }
-      updateClock();
-      setInterval(updateClock, 60000);
+    }
+    initBattery();
 
-      // unlock animation
-      unlockBtn.addEventListener("click", () => {
-        device.classList.add("unlocked");
-        lockLayer.classList.add("hidden");
-        // focus search for convenience
-        setTimeout(() => document.getElementById("searchInput").focus(), 420);
-      });
+    // Lock/Home ekran geçiş
+    function unlockPhone(){
+      document.getElementById("lockScreen").style.display = "none";
+      document.getElementById("homeScreen").classList.add("active");
+    }
 
-      // open app mock
-      function openApp(name) {
-        appShell.style.display = "flex";
-        appShell.setAttribute("aria-hidden", "false");
-        appTitle.textContent = name.charAt(0).toUpperCase() + name.slice(1);
-        appContent.textContent =
-          name + " uygulaması (demo). Buraya gerçek app içeriği koyabilirsin.";
+    // Uygulamalar
+    function openApp(name){
+      if(name === "Ayarlar"){
+        openSettings();
+      } else {
+        alert(name + " uygulaması yakında gelecek ⏳");
       }
+    }
+    function getLocalStorageUsageMB(){
+      let total = 0;
+      for(let key in localStorage){
+        if(!localStorage.hasOwnProperty(key)) continue;
+        let value = localStorage[key];
+        total += key.length + value.length;
+      }
+      return ((total*2)/(1024*1024)).toFixed(2);
+    }
 
-      // back from app
-      document.getElementById("backApp").addEventListener("click", () => {
-        appShell.style.display = "none";
-        appShell.setAttribute("aria-hidden", "true");
+    // Ayarlar Modalı
+    function openSettings(){
+      document.getElementById("settingsModal").style.display = "flex";
+      showSettingsTab('general');
+    }
+    function closeSettings(){
+      document.getElementById("settingsModal").style.display = "none";
+    }
+    function showSettingsTab(tab){
+      document.querySelectorAll('.settings-tab').forEach(btn=>{
+        btn.classList.toggle('active',btn.textContent.trim().toLowerCase()===(tab==="general"?"genel":"hakkında"));
       });
-
-      // icon click
-      document.querySelectorAll(".app").forEach((a) => {
-        a.addEventListener("dblclick", () => openApp(a.dataset.app));
-        a.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") openApp(a.dataset.app);
+      const content = document.getElementById('settingsContent');
+      if(tab==='general'){
+        content.innerHTML = `
+          <div class="settings-row"><label>Animasyon Hızı</label>
+            <input type="range" min="0.1" max="2" step="0.1" value="${animSpeed}" id="dragAnimSpeed">
+            <span id="dragAnimSpeedValue">${animSpeed}</span> sn
+          </div>
+          <div class="settings-row"><label>Tema</label>
+            <select id="themeSelect">
+              <option value="light"${theme==="light"?" selected":""}>Açık</option>
+              <option value="dark"${theme==="dark"?" selected":""}>Koyu</option>
+            </select>
+          </div>
+          <div class="settings-row"><label>Batarya</label>
+            <span id="settingsBattery">${document.getElementById("batteryPercent").textContent}</span>
+          </div>
+          <div class="settings-row"><label>Depolama Alanı (Toplam)</label>
+            <span>${totalStorage} MB</span>
+          </div>
+          <div class="settings-row"><label>Kullanılan Depolama</label>
+            <span id="lsUsage">${getLocalStorageUsageMB()} MB</span>
+          </div>
+          <div class="settings-row"><label>Ses Seviyesi</label>
+            <input type="range" min="0" max="100" value="${volume}" id="volRange"><span id="volValue">${volume}</span>%
+          </div>
+          <div class="settings-row"><label>Parlaklık</label>
+            <input type="range" min="10" max="100" value="${brightness}" id="brightRange"><span id="brightValue">${brightness}</span>%
+          </div>
+          <div class="settings-row"><label>WiFi</label>
+            <input type="checkbox" id="wifiToggle"${wifi?" checked":""}> <span>${wifi?"Açık":"Kapalı"}</span>
+          </div>
+          <div class="settings-row"><label>Bildirimler</label>
+            <input type="checkbox" id="notifToggle"${notifications?" checked":""}> <span>${notifications?"Açık":"Kapalı"}</span>
+          </div>
+          <div style="margin-top:11px; display:flex; justify-content:flex-end;">
+            <button style="padding:7px 12px; border:none; border-radius:7px; background:#1976d2; color:#fff; cursor:pointer; transition:background 0.2s;" onclick="showSettingsTab('about')">Hakkında</button>
+          </div>
+        `;
+        document.getElementById("dragAnimSpeed").addEventListener("input",e=>{
+          animSpeed=Number(e.target.value);
+          document.getElementById("dragAnimSpeedValue").textContent=animSpeed;
         });
-      });
-
-      // dock clicks
-      document
-        .querySelectorAll(".dock-icon")
-        .forEach((d) =>
-          d.addEventListener("click", () => openApp(d.dataset.app))
-        );
-
-      // drag & drop reorder with touch support
-      let dragged = null;
-      grid.addEventListener("dragstart", (e) => {
-        dragged = e.target.closest(".app");
-        e.dataTransfer?.setData("text/plain", "drag");
-        setTimeout(() => dragged.classList.add("dragging"), 20);
-      });
-      grid.addEventListener("dragend", (e) => {
-        if (dragged) {
-          dragged.classList.remove("dragging");
-          dragged = null;
-        }
-      });
-
-      grid.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        const after = getDragAfterElement(grid, e.clientY, e.clientX);
-        if (!dragged) return;
-        if (after == null) grid.appendChild(dragged);
-        else grid.insertBefore(dragged, after);
-      });
-
-      function getDragAfterElement(container, y, x) {
-        const elements = [...container.querySelectorAll(".app:not(.dragging)")];
-        return elements.reduce((closest, child) => {
-          const box = child.getBoundingClientRect();
-          const offset = Math.hypot(
-            x - (box.left + box.width / 2),
-            y - (box.top + box.height / 2)
-          );
-          if (closest == null || offset < closest.offset) {
-            return { offset, element: child };
-          }
-          return closest;
-        }, null)?.element;
+        document.getElementById("themeSelect").addEventListener("change",e=>{
+          theme=e.target.value;
+          document.body.style.background=theme==="dark"?"linear-gradient(120deg,#232526 0%, #414345 100%)":"linear-gradient(120deg,#eaeaea 0%, #e4e7ed 100%)";
+        });
+        document.getElementById("volRange").addEventListener("input",e=>{
+          volume=e.target.value;
+          document.getElementById("volValue").textContent=volume;
+        });
+        document.getElementById("brightRange").addEventListener("input",e=>{
+          brightness=e.target.value;
+          document.getElementById("brightValue").textContent=brightness;
+        });
+        document.getElementById("wifiToggle").addEventListener("change",e=>{
+          wifi=e.target.checked;
+          e.target.nextElementSibling.textContent=wifi?"Açık":"Kapalı";
+        });
+        document.getElementById("notifToggle").addEventListener("change",e=>{
+          notifications=e.target.checked;
+          e.target.nextElementSibling.textContent=notifications?"Açık":"Kapalı";
+        });
+        let lsInterval = setInterval(()=>{
+          if(document.getElementById("lsUsage"))
+            document.getElementById("lsUsage").textContent=getLocalStorageUsageMB()+" MB";
+        },800);
+        document.getElementById("settingsModal").onmouseleave = ()=>{ clearInterval(lsInterval); }
+        document.getElementById("settingsModal").onmouseenter = ()=>{ clearInterval(lsInterval); }
+      } else {
+        content.innerHTML = `
+          <div style="margin-bottom:8px;font-weight:bold;font-size:16px; color:#1976d2;">Hakkında</div>
+          <div class="settings-row"><label>Animasyon Hızı:</label><span>${animSpeed} sn</span></div>
+          <div class="settings-row"><label>Tema:</label><span>${theme==="light"?"Açık":"Koyu"}</span></div>
+          <div class="settings-row"><label>Batarya:</label><span>${document.getElementById("batteryPercent").textContent}</span></div>
+          <div class="settings-row"><label>Depolama Alanı (Toplam):</label><span>${totalStorage} MB</span></div>
+          <div class="settings-row"><label>Kullanılan Depolama:</label><span>${getLocalStorageUsageMB()} MB</span></div>
+          <div class="settings-row"><label>Ses Seviyesi:</label><span>${volume}%</span></div>
+          <div class="settings-row"><label>Parlaklık:</label><span>${brightness}%</span></div>
+          <div class="settings-row"><label>WiFi:</label><span>${wifi?"Açık":"Kapalı"}</span></div>
+          <div class="settings-row"><label>Bildirimler:</label><span>${notifications?"Açık":"Kapalı"}</span></div>
+          <div class="settings-row"><label>Sürüm:</label><span>v3.1.0 (Ultra Modern)</span></div>
+          <div style="margin-top:11px; color:#888;">Made by GenişKapı Company</div>
+        `;
       }
-
-      // long-press to enter edit mode
-      let pressTimer = null;
-      let isEdit = false;
-      grid.addEventListener("pointerdown", (e) => {
-        const el = e.target.closest(".app");
-        if (!el) return;
-        pressTimer = setTimeout(() => {
-          device.classList.add("edit");
-          isEdit = true;
-        }, 700);
-      });
-      grid.addEventListener("pointerup", () => {
-        clearTimeout(pressTimer);
-      });
-      document.addEventListener("pointermove", () => {
-        clearTimeout(pressTimer);
-      });
-
-      // exit edit on tap outside
-      document.addEventListener("click", (e) => {
-        if (!e.target.closest(".app")) {
-          device.classList.remove("edit");
-          isEdit = false;
-        }
-      });
-
-      // quick search: focus and open first app with substring
-      const searchInput = document.getElementById("searchInput");
-      searchInput.addEventListener("input", () => {
-        const q = searchInput.value.toLowerCase().trim();
-        if (!q) return;
-        const apps = [...document.querySelectorAll(".app")];
-        const match = apps.find((a) =>
-          a.querySelector(".label").textContent.toLowerCase().includes(q)
-        );
-        if (match) match.classList.add("pulse");
-        setTimeout(() => apps.forEach((a) => a.classList.remove("pulse")), 700);
-      });
-
-      // control center toggles (demo)
-      document
-        .getElementById("wifiBtn")
-        .addEventListener("click", () => alert("Wi‑Fi ayarları (demo)"));
-      document
-        .getElementById("btBtn")
-        .addEventListener("click", () => alert("Bluetooth ayarları (demo)"));
-
-      // wallpaper switcher (double-tap wallpaper to cycle)
-      const wallpapers = [
-        "linear-gradient(120deg, rgba(77,102,255,0.25), rgba(95,221,191,0.15)),url('https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=1200&q=60')",
-        "linear-gradient(135deg, rgba(255,97,97,0.15), rgba(255,183,77,0.12)),url('https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1200&q=60')",
-        "linear-gradient(160deg, rgba(111,76,255,0.14), rgba(0,210,255,0.06)),url('https://images.unsplash.com/photo-1526406915896-3f66a1c8f8d8?auto=format&fit=crop&w=1200&q=60')",
-      ];
-      let idx = 0;
-      wallpaper.addEventListener("dblclick", () => {
-        idx = (idx + 1) % wallpapers.length;
-        wallpaper.style.backgroundImage = wallpapers[idx];
-      });
-
-      // accessibility: keyboard shortcuts
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          appShell.style.display = "none";
-          device.classList.remove("edit");
-        }
-        if (e.key === "u" && e.ctrlKey) {
-          device.classList.add("unlocked");
-          lockLayer.classList.add("hidden");
-        }
-      });
-
-      // small helper: simulate opening settings on click
-      document.querySelectorAll("[data-app]").forEach((el) =>
-        el.addEventListener("click", (ev) => {
-          // single click: highlight
-          if (isEdit) return; // don't open while editing
-          el.animate(
-            [{ transform: "scale(0.98)" }, { transform: "scale(1)" }],
-            { duration: 150 }
-          );
-        })
-      );
-
-      // double-click is handled above (openApp)
-
-      // friendly tip (you can remove this) — utana sıkıla tarifi:)
-      console.log(
-        "Arayüz yüklendi. İstersen bu tek dosyayı kaydet ve tarayıcıda aç. Utanma — ikon setleri ve tema paketleri eklemeye yardım ederim 😉"
-      );
-    </script>
-  </body>
+    }
+  </script>
+</body>
 </html>
